@@ -1,0 +1,78 @@
+services:
+  auth: 
+    build: 
+      context: ./src/auth
+
+    restart: always
+    labels: 
+      - traefik.enable=true
+      - traefik.http.routers.svc1.rule=PathPrefix(`/tr.auth/authorize`)
+      - traefik.http.routers.svc1.priority=20 
+    ports:
+      - "8081:8081"
+    expose:
+      - "8081"
+    environment: 
+      - OIDC_WELL_KNOWN=<<>>
+      - OIDC_CLIENT_ID=<<>>
+      - OIDC_CLIENT_SECRET=<<>>
+    networks:
+      - n8n
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  traefik:
+    image: "traefik"
+    restart: always
+    command:
+      - "--api=true"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+
+
+    ports:
+      - "8080:80"
+    volumes:
+      - traefik_data:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - n8n
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    restart: always
+    ports:
+      - "127.0.0.1:5678:5678"
+    expose: 
+      - "5678"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.n8n.rule=PathPrefix(`/`)
+      - traefik.http.routers.n8n.tls=false
+      - traefik.http.middlewares.auth.forwardauth.address=http://auth:8081
+      - traefik.http.middlewares.auth.forwardauth.trustForwardHeader=true
+      - traefik.http.middlewares.auth.forwardauth.authResponseHeaders=Cookie
+      - traefik.http.routers.n8n.middlewares=auth
+      - traefik.http.routers.svc2.priority=10
+    environment:
+      - N8N_HOST=${SUBDOMAIN}.${DOMAIN_NAME}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${SUBDOMAIN}.${DOMAIN_NAME}/
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - N8N_PROXY_HOPS=1
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - n8n
+
+
+volumes:
+  traefik_data:
+  n8n_data:
+
+networks: 
+  n8n:
