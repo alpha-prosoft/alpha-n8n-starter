@@ -1,8 +1,6 @@
-build:
-	docker compose build 
-
 up:
-	docker compose up 
+	export BUILDKIT_PROGRESS=plain &&\
+	docker compose build && docker compose up 
 
 down:
 	docker compose down

@@ -106,7 +106,7 @@ class S(BaseHTTPRequestHandler):
         # Try to get the token from headers
         token = self.headers.get(auth_holder)
         if token:
-            logging.info("Token found in headers")
+            logging.debug("Token found in headers")
             return token
 
         # Try to get the token from cookies
@@ -115,7 +115,7 @@ class S(BaseHTTPRequestHandler):
             cookie.load(self.headers['Cookie'])
             if auth_holder in cookie:
                 token = cookie[auth_holder].value
-                logging.info("Token found in cookies")
+                logging.debug("Token found in cookies")
                 return token
 
         logging.warning("Token not found in headers or cookies")
@@ -150,7 +150,7 @@ class S(BaseHTTPRequestHandler):
         if jwks_client is None:
             self.send_error_message("System not initialized")
             return
-        logging.info("Processing login")
+        logging.debug("Processing login")
 
         token = self.get_token()
         if token is None:

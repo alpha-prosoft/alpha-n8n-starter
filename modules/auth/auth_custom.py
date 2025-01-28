@@ -168,7 +168,7 @@ def process_token(response, token, userinfo):
     email = userinfo["email"]
 
     if email in cache:
-        logging.info(f"User found cached {email}")
+        logging.debug(f"User found cached {email}")
         headers = cache[email]
     else:
         logging.info(f"User not cached {email}")
@@ -186,13 +186,12 @@ def process_token(response, token, userinfo):
         headers = n8n_login(email)
         cache[email] = headers
 
-        logging.info(f"Pers {user}")
         if "personalizationAnswers" not in user or user["personalizationAnswers"] is None:
             n8n_complete_survey(email)
 
     for key, value in headers.items():
         if key == 'Set-Cookie':
-            logging.info(f"Adding header {key}: {value}")
+            logging.debug(f"Adding header {key}: {value}")
             response.send_header("Cookie", value)
 
     response.end_headers()

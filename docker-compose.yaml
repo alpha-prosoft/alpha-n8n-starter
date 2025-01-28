@@ -1,7 +1,7 @@
 services:
   auth: 
     build: 
-      context: ./src/auth
+      context: ./modules/auth
 
     restart: always
     labels: 
@@ -13,13 +13,17 @@ services:
     expose:
       - "8081"
     environment: 
-      - OIDC_WELL_KNOWN=<<>>
-      - OIDC_CLIENT_ID=<<>>
-      - OIDC_CLIENT_SECRET=<<>>
+      - OIDC_WELL_KNOWN=
+      - OIDC_CLIENT_ID=
+      - OIDC_CLIENT_SECRET=
     networks:
       - n8n
     volumes:
       - n8n_data:/home/node/.n8n
+
+    depends_on:
+      n8n:
+        condition: service_healthy
 
   traefik:
     image: "traefik"
@@ -41,7 +45,8 @@ services:
       - n8n
 
   n8n:
-    image: docker.n8n.io/n8nio/n8n
+    build: 
+      context: ./modules/n8n
     restart: always
     ports:
       - "127.0.0.1:5678:5678"
@@ -64,11 +69,12 @@ services:
       - WEBHOOK_URL=https://${SUBDOMAIN}.${DOMAIN_NAME}/
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
       - N8N_PROXY_HOPS=1
+      - DEBUG=True
     volumes:
       - n8n_data:/home/node/.n8n
+      - ${PWD}/modules/n8n/dist:/home/node/.n8n/custom
     networks:
       - n8n
-
 
 volumes:
   traefik_data:
